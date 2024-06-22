@@ -42,11 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchPrices = async () => {
         try {
+            console.log('Fetching prices...');
             const [usdResponse, krwResponse, exchangeRateResponse, hashrateResponse] = await Promise.all([
                 fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'),
                 fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC'),
                 fetch('https://api.exchangerate-api.com/v4/latest/USD'),
-                fetch('https://api.blockchain.info/q/hashrate') // 비트코인 해시레이트 API
+                fetch('https://cors-anywhere.herokuapp.com/https://api.blockchair.com/bitcoin/stats') // 비트코인 해시레이트 API
             ]);
 
             if (!usdResponse.ok) {
@@ -65,11 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const usdData = await usdResponse.json();
             const krwData = await krwResponse.json();
             const exchangeRateData = await exchangeRateResponse.json();
-            const hashrateData = await hashrateResponse.text();
+            const hashrateData = await hashrateResponse.json();
+
+            console.log('Fetched data:', { usdData, krwData, exchangeRateData, hashrateData });
 
             const usdPrice = usdData.bitcoin.usd;
             const krwPrice = krwData[0].trade_price;
             const exchangeRate = exchangeRateData.rates.KRW;
+            const hashrate = hashrateData.data.hashrate_24h / 1e12; // TH/s 단위로 변환
 
             const krwPriceInUsd = krwPrice / exchangeRate;
             const premium = ((krwPriceInUsd / usdPrice) - 1) * 100;
@@ -77,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             priceElement.innerText = `Current Bitcoin Price: $${usdPrice}`;
             exchangeRateElement.innerText = `Current Exchange Rate: 1 USD = ${exchangeRate} KRW`;
             kimchiPremiumElement.innerText = `Kimchi Premium: ${premium.toFixed(2)}%`;
-            hashrateElement.innerText = `Current Bitcoin Hashrate: ${hashrateData} TH/s`;
+            hashrateElement.innerText = `Current Bitcoin Hashrate: ${hashrate.toFixed(2)} TH/s`;
 
             const now = new Date();
             chart.data.labels.push(now);
@@ -90,9 +94,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             chart.update();
         } catch (error) {
+            console.error('Error fetching data:', error);
             priceElement.innerText = 'Failed to fetch Bitcoin price';
             exchangeRateElement.innerText = 'Failed to fetch exchange rate';
             kimchiPremiumElement.innerText = 'Failed to fetch Kimchi Premium';
             hashrateElement.innerText = 'Failed to fetch Bitcoin Hashrate';
-            console.error('Error fetching data:', error);
-            setTimeout(f
+            setTimeout(fetchPrices, 10000);  // 10초 후에 다시 시도
+        }
+    };
+
+    fetchPrices();
+    setInterval(fetchPrices, 30000);  // 30초마다 데이터 갱신
+});
