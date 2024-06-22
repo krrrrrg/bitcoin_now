@@ -44,22 +44,26 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log('Fetching prices...');
             const [usdResponse, krwResponse, exchangeRateResponse, hashrateResponse] = await Promise.all([
-                fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'),
-                fetch('https://api.upbit.com/v1/ticker?markets=KRW-BTC'),
-                fetch('https://api.exchangerate-api.com/v4/latest/USD'),
-                fetch('https://cors-anywhere.herokuapp.com/https://api.blockchair.com/bitcoin/stats') // 비트코인 해시레이트 API
+                fetch('https://cors-anywhere.herokuapp.com/https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'),
+                fetch('https://cors-anywhere.herokuapp.com/https://api.upbit.com/v1/ticker?markets=KRW-BTC'),
+                fetch('https://cors-anywhere.herokuapp.com/https://api.exchangerate-api.com/v4/latest/USD'),
+                fetch('https://cors-anywhere.herokuapp.com/https://api.blockchair.com/bitcoin/stats')
             ]);
 
             if (!usdResponse.ok) {
+                console.error('USD Price Fetch Error:', usdResponse.statusText);
                 throw new Error('Failed to fetch USD price');
             }
             if (!krwResponse.ok) {
+                console.error('KRW Price Fetch Error:', krwResponse.statusText);
                 throw new Error('Failed to fetch KRW price');
             }
             if (!exchangeRateResponse.ok) {
+                console.error('Exchange Rate Fetch Error:', exchangeRateResponse.statusText);
                 throw new Error('Failed to fetch exchange rate');
             }
             if (!hashrateResponse.ok) {
+                console.error('Hashrate Fetch Error:', hashrateResponse.statusText);
                 throw new Error('Failed to fetch hashrate');
             }
 
